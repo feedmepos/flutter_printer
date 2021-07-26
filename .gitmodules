@@ -1,0 +1,3 @@
+[submodule "flutter_inappwebview"] 
+  path = flutter_inappwebview 
+  url = git://github.com/feedmepos/flutter_inappwebview
