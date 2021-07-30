@@ -1,12 +1,10 @@
-import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_html2image/flutter_html2image.dart';
 import 'package:flutter_html2image/src/merger.dart';
-import 'package:flutter_inappwebview/flutter_inappwebview.dart';
+import 'package:flutter_inappwebview_forked/flutter_inappwebview.dart';
 import 'package:image/image.dart';
 import 'package:puppeteer/puppeteer.dart' as puppeteer;
 
