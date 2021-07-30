@@ -1,3 +1,7 @@
+## [1.0.1]
+
+- Null safety support
+
 ## [1.0.0]
 
 - `Ticket` class replaced by `Generator`.
