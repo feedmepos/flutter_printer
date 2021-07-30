@@ -1,6 +1,6 @@
 name: esc_pos_utils_forked
-description: Basic Flutter/Dart classes for ESC/POS printing. Ticket class generates ESC/POS commands that can be sent to a thermal printer. Fork, with more printer commands and bug fixes.
-version: 1.0.0+2
+description: Basic Flutter/Dart classes for ESC/POS printing. Ticket class generates ESC/POS commands that can be sent to a thermal printer. Fork, with null safety support.
+version: 1.0.1
 homepage: https://github.com/feedmepos/flutter_printer/packages/esc_pos_utils
 
 environment:
@@ -16,7 +16,3 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
-
-flutter:
-  assets:
-    - packages/esc_pos_utils/resources/capabilities.json
