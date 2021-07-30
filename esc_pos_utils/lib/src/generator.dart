@@ -9,7 +9,7 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
-import 'package:esc_pos_utils/esc_pos_utils.dart';
+import 'package:esc_pos_utils_forked/esc_pos_utils.dart';
 import 'package:gbk_codec/gbk_codec.dart';
 import 'package:hex/hex.dart';
 import 'package:image/image.dart';
