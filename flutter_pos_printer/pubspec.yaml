@@ -11,12 +11,10 @@ dependencies:
   flutter:
     sdk: flutter
   flutter_star_prnt: ^2.3.4
-  esc_pos_utils:
-    path: '../esc_pos_utils'
   enum_to_string: ^2.0.1
-  flutter_html2image:
-    path: '../flutter_html2image'
   queue: ^3.1.0
+  esc_pos_utils_forked: ^1.0.1
+  flutter_html2image: ^1.0.0
 
 dev_dependencies:
   flutter_test:

@@ -1,10 +1,10 @@
-import 'package:esc_pos_utils/esc_pos_utils.dart';
+import 'package:esc_pos_utils_forked/esc_pos_utils_forked.dart';
 import 'package:image/image.dart' as image;
 
 class EscPosPrinter {
   EscPosPrinter();
 
-  static late final Generator generator = Generator(null, null);
+  static late final Generator generator = Generator();
 
   static List<int> buildPulseDrawerCommand() {
     return [0x1b, 0x70, 0x00, 0x1e, 0xff, 0x00];

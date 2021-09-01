@@ -1,4 +1,4 @@
-import 'package:esc_pos_utils/esc_pos_utils.dart';
+import 'package:esc_pos_utils_forked/esc_pos_utils_forked.dart';
 import 'package:flutter_html2image/flutter_html2image.dart';
 import 'package:flutter_pos_printer/flutter_pos_printer.dart';
 import 'package:queue/queue.dart';

@@ -39,7 +39,7 @@ class Html2Image {
 
       await _headlessWebView.run();
       await _headlessWebView.setSize(Size(300, 300));
-    } else if (Platform.isWindows) {
+    } else if (Platform.isWindows) {  
       _browser = await puppeteer.puppeteer
           .launch(defaultViewport: puppeteer.DeviceViewport(width: 300));
 
