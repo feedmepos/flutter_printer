@@ -78,16 +78,14 @@ class VirtualPrinter {
         ifAbsent: () => PrinterCore(this.connection, this.type, this.path));
   }
 
-  PrinterCore? core() {
-    return dictionary[key];
-  }
+  PrinterCore? get printer => dictionary[key];
 
   void sendTaskToQueue(Future Function() function) {
-    core()?._queue.add(() => function.call());
+    printer?._queue.add(() => function.call());
   }
 
   void stopQueue() {
-    core()?._queue.cancel();
+    printer?._queue.cancel();
   }
 
   void killAllQueue() {
@@ -97,9 +95,9 @@ class VirtualPrinter {
   }
 
   Future<void> dispose() async {
-    if (core() != null) {
-      await core()!._imageGenerator.dispose();
-      core()!._queue.dispose();
+    if (printer != null) {
+      await printer!._imageGenerator.dispose();
+      printer!._queue.dispose();
       dictionary.remove(key);
     }
   }
@@ -111,11 +109,11 @@ class VirtualPrinter {
     sendTaskToQueue(() async {
       if (type == PrinterType.TSPL)
         for (int i = 0; i < n; ++i) {
-          await core()?.send(TsplPrinter.beep().codeUnits);
+          await printer?.send(TsplPrinter.beep().codeUnits);
         }
 
       if (type == PrinterType.ESCPOS)
-        await core()?.send(EscPosPrinter.generator.beep(n: n));
+        await printer?.send(EscPosPrinter.generator.beep(n: n));
     });
   }
 
@@ -124,7 +122,8 @@ class VirtualPrinter {
       {int n = 1, PosBeepFlashMode mode = PosBeepFlashMode.BuzzFlash}) {
     if (type == PrinterType.ESCPOS)
       sendTaskToQueue(() async {
-        await core()?.send(EscPosPrinter.generator.beepFlash(n: n, mode: mode));
+        await printer
+            ?.send(EscPosPrinter.generator.beepFlash(n: n, mode: mode));
       });
   }
 
@@ -133,13 +132,13 @@ class VirtualPrinter {
   /// Printer [info]
   void printHtml(HtmlInfo info) {
     sendTaskToQueue(() async {
-      if (core() != null) {
+      if (printer != null) {
         bool isTsplPrinter = type == PrinterType.TSPL;
-        await core()!._imageGenerator.initialize();
+        await printer!._imageGenerator.initialize();
         // Load HTML
-        await core()!._imageGenerator.loadHtml(info.data);
+        await printer!._imageGenerator.loadHtml(info.data);
         // Generate a Uint8List image
-        var results = await core()!._imageGenerator.generateImage(
+        var results = await printer!._imageGenerator.generateImage(
             paperWidth: info.paperWidth,
             paperHeight: info.paperHeight,
             dpi: info.dpi,
@@ -158,9 +157,9 @@ class VirtualPrinter {
 
           // Generate specific image command bytes for printer
           var printerImageBytes =
-              core()!.encodeImageForPrinter(results.data, printInfo);
+              printer!.encodeImageForPrinter(results.data, printInfo);
           final height = results.height;
-          await core()!.send(printerImageBytes);
+          await printer!.send(printerImageBytes);
           await Future.delayed(
               Duration(milliseconds: 1000 + (height * 0.5).toInt()));
         }
@@ -171,7 +170,7 @@ class VirtualPrinter {
   void pulseDrawer() {
     sendTaskToQueue(() async {
       if (type == PrinterType.ESCPOS)
-        await core()?.send(EscPosPrinter.buildPulseDrawerCommand());
+        await printer?.send(EscPosPrinter.buildPulseDrawerCommand());
 
       if (connection == PrinterDriver.Star) {
         //await core()?.star.openCashDrawer();
@@ -184,7 +183,7 @@ class VirtualPrinter {
   /// IP Address [ip]
   void setIp(String ip) {
     sendTaskToQueue(() async {
-      await core()?.send(PrinterBackend.encodeSetIP(ip));
+      await printer?.send(PrinterBackend.encodeSetIP(ip));
       await Future.delayed(Duration(milliseconds: 200));
     });
   }
@@ -194,7 +193,7 @@ class VirtualPrinter {
   /// [List<int>] bytes
   void sendBytes(List<int> bytes) {
     sendTaskToQueue(() async {
-      await core()?.send(bytes);
+      await printer?.send(bytes);
     });
   }
 }

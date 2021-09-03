@@ -8,7 +8,8 @@ void main() {
 
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  VirtualPrinter? printer;
+  VirtualPrinter? printer1;
+  
   setUp(() {
     channel.setMockMethodCallHandler((MethodCall methodCall) async {
       return '42';
@@ -20,19 +21,19 @@ void main() {
   });
 
   test("initialize printer", () async {
-    printer = VirtualPrinter(
+    printer1 = VirtualPrinter(
         driver: PrinterDriver.Network,
         type: PrinterType.ESCPOS,
         endpoint: "192.168.0.1");
     expect(VirtualPrinter.dictionary.length, 1);
   });
 
-  test("retrieve PrinterCore", () async {
-    expect(printer?.core(), isNot(null));
+  test("retrieve Printer", () async {
+    expect(printer1?.printer, isNot(null));
   });
   
   test("dispose printer", () async {
-    await printer?.dispose();
+    await printer1?.dispose();
     expect(VirtualPrinter.dictionary.length, lessThan(1));
   });
 }
