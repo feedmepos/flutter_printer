@@ -1,6 +1,6 @@
 name: flutter_html2image
 description: A Flutter plugin to generate full content screenshot from raw HTML using platform-specific web engine.
-version: 1.0.1
+version: 1.0.2
 homepage: https://github.com/feedmepos/flutter_printer/packages/flutter_html2image
 
 environment:

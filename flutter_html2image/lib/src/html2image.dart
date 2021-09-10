@@ -17,7 +17,6 @@ class ImageInfo {
 }
 
 class Html2Image {
-  bool _initialized = false;
   HeadlessInAppWebView? _headlessWebView;
   puppeteer.Browser? _browser;
   puppeteer.Page? _page;
@@ -28,8 +27,6 @@ class Html2Image {
   ///
   /// Windows: Puppeteer Page instance(Chrome supports multi tab pages)
   Future<void> _initialize() async {
-    if (_initialized) return;
-
     if (Platform.isAndroid) {
       await AndroidInAppWebViewController.setWebContentsDebuggingEnabled(true);
     }
@@ -43,7 +40,6 @@ class Html2Image {
 
         await _headlessWebView?.run();
         await _headlessWebView?.setSize(Size(300, 300));
-        _initialized = true;
       }
     } else {
       if (_browser == null) {
@@ -54,7 +50,6 @@ class Html2Image {
       if (_page == null) {
         _page = await _browser?.newPage();
       }
-      _initialized = true;
     }
   }
 
@@ -74,7 +69,7 @@ class Html2Image {
       required int dpi,
       required bool isTspl,
       int delayMs = 150}) async {
-    if (!_initialized) await _initialize();
+    await _initialize();
 
     Uint8List? screenshot;
     List<Uint8List> screenshotImages = [];
@@ -145,8 +140,6 @@ class Html2Image {
   }
 
   Future<void> dispose({bool all = false}) async {
-    if (!_initialized) return;
-
     if (_headlessWebView != null) {
       await _headlessWebView?.dispose();
     }
