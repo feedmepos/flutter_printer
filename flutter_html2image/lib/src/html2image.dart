@@ -17,47 +17,49 @@ class ImageInfo {
 }
 
 class Html2Image {
-  late HeadlessInAppWebView _headlessWebView;
-  late puppeteer.Browser _browser;
-  late puppeteer.Page _page;
+  bool _initialized = false;
+  HeadlessInAppWebView? _headlessWebView;
+  puppeteer.Browser? _browser;
+  puppeteer.Page? _page;
 
   /// Initialize a new platform-specific web instance
   ///
   /// Android/iOS: HeadlessInAppWebView instance
   ///
   /// Windows: Puppeteer Page instance(Chrome supports multi tab pages)
-  Future<void> initialize() async {
+  Future<void> _initialize() async {
+    if (_initialized) return;
+
     if (Platform.isAndroid) {
       await AndroidInAppWebViewController.setWebContentsDebuggingEnabled(true);
     }
 
     if (Platform.isAndroid || Platform.isIOS) {
-      _headlessWebView = new HeadlessInAppWebView(
-          initialData: InAppWebViewInitialData(data: "Hello World"),
-          onWebViewCreated: (controller) {},
-          onLoadStop: (controller, url) {});
+      if (_headlessWebView == null) {
+        _headlessWebView = new HeadlessInAppWebView(
+            initialData: InAppWebViewInitialData(data: "<html><html>"),
+            onWebViewCreated: (controller) {},
+            onLoadStop: (controller, url) {});
 
-      await _headlessWebView.run();
-      await _headlessWebView.setSize(Size(300, 300));
-    } else if (Platform.isWindows) {  
-      _browser = await puppeteer.puppeteer
-          .launch(defaultViewport: puppeteer.DeviceViewport(width: 300));
+        await _headlessWebView?.run();
+        await _headlessWebView?.setSize(Size(300, 300));
+        _initialized = true;
+      }
+    } else {
+      if (_browser == null) {
+        _browser = await puppeteer.puppeteer
+            .launch(defaultViewport: puppeteer.DeviceViewport(width: 300));
+      }
 
-      _page = await _browser.newPage();
-    }
-  }
-
-  Future<void> loadHtml(String html, {int delayMs = 150}) async {
-    if (Platform.isAndroid || Platform.isIOS) {
-      await _headlessWebView.webViewController.loadData(data: html);
-      await Future.delayed(Duration(milliseconds: delayMs));
-    } else if (Platform.isWindows) {
-      await _page.setContent(html, wait: puppeteer.Until.load);
+      if (_page == null) {
+        _page = await _browser?.newPage();
+      }
+      _initialized = true;
     }
   }
 
   Future<Uint8List?> _captureiOS(double contentHeight) async {
-    return await _headlessWebView.webViewController.takeScreenshot(
+    return await _headlessWebView?.webViewController.takeScreenshot(
         screenshotConfiguration: ScreenshotConfiguration(
             snapshotWidth: 300,
             iosAfterScreenUpdates: false,
@@ -65,24 +67,34 @@ class Html2Image {
                 x: 0, y: 0, width: 300, height: contentHeight)));
   }
 
-  Future<ImageInfo> generateImage({required int paperWidth,
-    required int paperHeight,
-    required int dpi,
-    required bool isTspl}) async {
+  Future<ImageInfo> generateImage(
+      {required String content,
+      required int paperWidth,
+      required int paperHeight,
+      required int dpi,
+      required bool isTspl,
+      int delayMs = 150}) async {
+    if (!_initialized) await _initialize();
+
     Uint8List? screenshot;
     List<Uint8List> screenshotImages = [];
 
-    if (Platform.isAndroid) {
-      screenshot = await _headlessWebView.capture();
+    if (Platform.isAndroid || Platform.isIOS) {
+      await _headlessWebView?.webViewController.loadData(data: content);
+      await Future.delayed(Duration(milliseconds: delayMs));
+    } else if (Platform.isWindows) {
+      await _page?.setContent(content, wait: puppeteer.Until.load);
     }
 
-    if (Platform.isIOS) {
+    if (Platform.isAndroid) {
+      screenshot = await _headlessWebView?.capture();
+    } else if (Platform.isIOS) {
       // setSize on WKWebView does not execute immediately
-      await _headlessWebView.setSize(Size(300, 300));
+      await _headlessWebView?.setSize(Size(300, 300));
       await Future.delayed(Duration(milliseconds: 10));
 
       final int webViewHeight =
-      (await _headlessWebView.webViewController.getContentHeight())!;
+          (await _headlessWebView?.webViewController.getContentHeight())!;
 
       // iOS has a height limit of 2700
       // So we must programmatically scroll and take screenshot
@@ -92,10 +104,10 @@ class Html2Image {
         for (var i = 0; i < chunks; ++i) {
           bool isLast = webViewHeight - (i * heightLimit) < heightLimit;
           final int chunkHeight =
-          isLast ? (webViewHeight - (chunks * heightLimit)) : heightLimit;
-          await _headlessWebView.webViewController
+              isLast ? (webViewHeight - (chunks * heightLimit)) : heightLimit;
+          await _headlessWebView?.webViewController
               .scrollTo(x: 0, y: (i * chunkHeight).toInt());
-          await _headlessWebView.setSize(Size(300, chunkHeight.toDouble()));
+          await _headlessWebView?.setSize(Size(300, chunkHeight.toDouble()));
           // 100ms is enough for the setSize to take affect
           await Future.delayed(Duration(milliseconds: 100));
           var image = await _captureiOS(chunkHeight.toDouble());
@@ -108,10 +120,8 @@ class Html2Image {
       } else {
         screenshot = await _captureiOS(webViewHeight.toDouble());
       }
-    }
-
-    if (Platform.isWindows) {
-      screenshot = await _page.screenshot(fullPage: true);
+    } else {
+      screenshot = await _page?.screenshot(fullPage: true);
     }
 
     final double mmToInch = 0.036;
@@ -119,7 +129,7 @@ class Html2Image {
     final oriWidth = decodedImage!.width;
     final oriHeight = decodedImage.height;
     int targetWidthPx =
-    (paperWidth.toDouble() * dpi.toDouble() * mmToInch).toInt();
+        (paperWidth.toDouble() * dpi.toDouble() * mmToInch).toInt();
     final int nearest = 8;
     targetWidthPx = (targetWidthPx - (targetWidthPx % nearest)).round();
     final int widthRatio = targetWidthPx ~/ oriWidth;
@@ -135,8 +145,16 @@ class Html2Image {
   }
 
   Future<void> dispose({bool all = false}) async {
-    _headlessWebView.dispose();
-    await _page.close(runBeforeUnload: false);
-    await _browser.close();
+    if (!_initialized) return;
+
+    if (_headlessWebView != null) {
+      await _headlessWebView?.dispose();
+    }
+    if (_page != null) {
+      await _page?.close();
+    }
+    if (_browser != null) {
+      await _browser?.close();
+    }
   }
 }
