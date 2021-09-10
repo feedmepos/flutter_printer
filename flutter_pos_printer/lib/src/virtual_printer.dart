@@ -64,21 +64,20 @@ class VirtualPrinter {
     init();
   }
 
+  static final dictionary = Map<ConnectionPath, PrinterCore>();
+
   late final PrinterDriver connection;
   late final PrinterType type;
   late final ConnectionPath path;
   final bool isAndroid;
 
-  get key => path;
-
-  static final dictionary = Map<ConnectionPath, PrinterCore>();
+  String get key => path;
+  PrinterCore? get printer => dictionary[key];
 
   void init() {
     dictionary.update(this.path, (value) => value,
         ifAbsent: () => PrinterCore(this.connection, this.type, this.path));
   }
-
-  PrinterCore? get printer => dictionary[key];
 
   void sendTaskToQueue(Future Function() function) {
     printer?._queue.add(() => function.call());
@@ -134,11 +133,9 @@ class VirtualPrinter {
     sendTaskToQueue(() async {
       if (printer != null) {
         bool isTsplPrinter = type == PrinterType.TSPL;
-        await printer!._imageGenerator.initialize();
-        // Load HTML
-        await printer!._imageGenerator.loadHtml(info.data);
         // Generate a Uint8List image
         var results = await printer!._imageGenerator.generateImage(
+            content: info.data,
             paperWidth: info.paperWidth,
             paperHeight: info.paperHeight,
             dpi: info.dpi,
