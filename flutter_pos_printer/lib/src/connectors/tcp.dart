@@ -13,7 +13,7 @@ class TcpPrinterInfo {
   });
 }
 
-class TcpPrinterConnector extends PrinterConnector {
+class TcpPrinterConnector implements PrinterConnector {
   TcpPrinterConnector(this._host,
       {Duration timeout = const Duration(seconds: 5), port = 9100})
       : _port = port,

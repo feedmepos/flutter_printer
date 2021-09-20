@@ -13,7 +13,7 @@ class EscPosPrinter extends GenericPrinter {
   final int dpi;
   final int beepCount;
 
-  static late final Generator generator = Generator();
+  final Generator generator = Generator();
 
   @override
   Future<bool> beep() {

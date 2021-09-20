@@ -1,4 +1,5 @@
 import 'dart:typed_data';
+
 import 'package:flutter/services.dart';
 
 final flutterPrinterChannel = const MethodChannel('flutter_pos_printer');
@@ -11,6 +12,7 @@ abstract class Printer {
   Future<bool> selfTest();
 }
 
+//
 abstract class PrinterConnector {
   Future<bool> send(List<int> bytes);
 }
@@ -34,7 +36,7 @@ abstract class GenericPrinter extends Printer {
     }
   }
 
-  Future<bool> sendToConnector(List<int> Function() fn) {
-    return connector.send(fn());
+  Future<bool> sendToConnector(List<int> Function() fn) async {
+    return await connector.send(fn());
   }
 }

@@ -21,7 +21,7 @@ class AndroidUsbPrinterInfo {
   });
 }
 
-class AndroidUsbPrinterConnector extends PrinterConnector {
+class AndroidUsbPrinterConnector implements PrinterConnector {
   AndroidUsbPrinterConnector(this.vendorId, this.productId);
 
   final String vendorId;
