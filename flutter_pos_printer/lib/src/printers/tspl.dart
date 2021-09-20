@@ -1,8 +1,8 @@
 import 'dart:core';
+import 'dart:typed_data';
 
+import 'package:flutter_pos_printer/printer.dart';
 import 'package:image/image.dart';
-
-import 'backend.dart';
 
 class ImageRaster {
   ImageRaster({required this.data, required this.width, required this.height});
@@ -108,20 +108,23 @@ class Command {
   }
 }
 
-class TsplPrinter {
+class TsplPrinter extends GenericPrinter {
   TsplPrinter(
-      {String unit = "mm",
-      String sizeWidth = "35",
-      String sizeHeight = "25",
-      String gapDistance = "5",
-      String gapOffset = "0",
-      String referenceX = "0",
-      String referenceY = "0",
-      String direction = "0",
-      String offset = "0",
-      String offsetDistance = "0",
-      String shiftLeft = "0",
-      String shiftTop = "0"}) {
+    PrinterConnector connector, {
+    String unit = "mm",
+    String sizeWidth = "35",
+    String sizeHeight = "25",
+    String gapDistance = "5",
+    String gapOffset = "0",
+    String referenceX = "0",
+    String referenceY = "0",
+    String direction = "0",
+    String offset = "0",
+    String offsetDistance = "0",
+    String shiftLeft = "0",
+    String shiftTop = "0",
+    this.dpi = "200",
+  }) : super(connector) {
     this._unit = unit;
     this._sizeWidth = sizeWidth;
     this._sizeHeight = sizeHeight;
@@ -144,6 +147,7 @@ class TsplPrinter {
     ].join();
   }
 
+  final String dpi;
   late final String _config;
   late final String _unit;
   late final String _sizeWidth;
@@ -158,60 +162,56 @@ class TsplPrinter {
   late final String _shiftLeft;
   late final String _shiftTop;
 
-  List<int> _toImageCommand(List<int> rasterData, String widthByte,
-      String heightDot, String x, String y,
-      {String mode = "0",
-      String copy = "1",
-      String repeat = "1",
-      bool beep = false}) {
-    List<int> buffer = [];
-    buffer += _convertStringToUTF16(this._config);
-    buffer += _convertStringToUTF16(Command.clearCache());
-    buffer += _convertStringToUTF16(
-        Command.imageString(x, y, widthByte, heightDot, mode: mode));
-    buffer += rasterData;
-    buffer += Command.EOL_HEX;
-    buffer += _convertStringToUTF16(Command.printIt(copy, repeat: repeat));
-    if (beep) buffer += _convertStringToUTF16(Command.beep());
-    buffer += _convertStringToUTF16(Command.close());
-    return buffer;
-  }
-
-  static List<int> _convertStringToUTF16(String str) {
+  List<int> _convertStringToUTF16(String str) {
     return str.codeUnits;
   }
 
-  static String beep() {
-    return [Command.clearCache(), Command.beep(), Command.close()].join();
+  @override
+  Future<bool> beep() {
+    return sendToConnector(() {
+      return [Command.clearCache(), Command.beep(), Command.close()]
+          .join()
+          .codeUnits;
+    });
   }
 
-  static String selfTest() {
-    return [Command.clearCache(), Command.selfTest(), Command.close()].join();
+  @override
+  Future<bool> selfTest() {
+    return sendToConnector(() {
+      return [Command.clearCache(), Command.selfTest(), Command.close()]
+          .join()
+          .codeUnits;
+    });
   }
 
-  List<int> buildImageCommand(
-      {required List<int> imageData, required int dpi, bool beep = false}) {
-    if (imageData.length > 0) {
-      final decodedImage = decodeImage(imageData)!;
-      final rasterizeImage = _toRaster(decodedImage, dpi: dpi);
-      return _toImageCommand(rasterizeImage.data, rasterizeImage.width,
-          rasterizeImage.height, "0", "0",
-          beep: beep);
-    } else {
-      throw new Exception("imageData has no buffer size");
-    }
+  @override
+  Future<bool> setIp(String ipAddress) {
+    return sendToConnector(() {
+      return encodeSetIP(ipAddress);
+    });
   }
 
-  List<int> generateTest() {
-    List<int> buffer = [];
-    buffer += _convertStringToUTF16(this._config);
-    buffer += _convertStringToUTF16(Command.clearCache());
-    buffer += _convertStringToUTF16(selfTest());
-    buffer += Command.EOL_HEX;
-    buffer += buffer += _convertStringToUTF16(
-        Command.printIt(1.toString(), repeat: 1.toString()));
-    buffer += _convertStringToUTF16(Command.close());
-    return buffer;
+  @override
+  Future<bool> image(Uint8List image) {
+    return sendToConnector(() {
+      if (image.length > 0) {
+        final decodedImage = decodeImage(image)!;
+        final rasterizeImage = _toRaster(decodedImage, dpi: int.parse(dpi));
+        List<int> buffer = [];
+        buffer += _convertStringToUTF16(this._config);
+        buffer += _convertStringToUTF16(Command.clearCache());
+        buffer += _convertStringToUTF16(Command.imageString(
+            '0', '0', rasterizeImage.width, rasterizeImage.height,
+            mode: '0'));
+        buffer += rasterizeImage.data;
+        buffer += Command.EOL_HEX;
+        buffer += _convertStringToUTF16(Command.printIt('1', repeat: '1'));
+        buffer += _convertStringToUTF16(Command.close());
+        return buffer;
+      } else {
+        return [];
+      }
+    });
   }
 
   ImageRaster _toRaster(Image imgSrc, {int dpi = 200}) {
@@ -251,5 +251,10 @@ class TsplPrinter {
         data: rasterizeImage,
         width: widthBytes.toString(),
         height: heightPx.toString());
+  }
+
+  @override
+  Future<bool> pulseDrawer() async {
+    return true;
   }
 }

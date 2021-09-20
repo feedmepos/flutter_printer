@@ -68,9 +68,9 @@ public class FlutterPosPrinterPlugin implements FlutterPlugin, MethodCallHandler
       deviceMap.put("name", usbDevice.getDeviceName());
       deviceMap.put("manufacturer", usbDevice.getManufacturerName());
       deviceMap.put("product", usbDevice.getProductName());
-      deviceMap.put("deviceid", Integer.toString(usbDevice.getDeviceId()));
-      deviceMap.put("vendorid", Integer.toString(usbDevice.getVendorId()));
-      deviceMap.put("productid", Integer.toString(usbDevice.getProductId()));
+      deviceMap.put("deviceId", Integer.toString(usbDevice.getDeviceId()));
+      deviceMap.put("vendorId", Integer.toString(usbDevice.getVendorId()));
+      deviceMap.put("productId", Integer.toString(usbDevice.getProductId()));
       list.add(deviceMap);
     }
     result.success(list);

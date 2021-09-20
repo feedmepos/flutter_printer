@@ -1,34 +1,60 @@
-import 'package:esc_pos_utils_forked/esc_pos_utils_forked.dart';
-import 'package:image/image.dart' as image;
+import 'dart:typed_data';
 
-class EscPosPrinter {
-  EscPosPrinter();
+import 'package:esc_pos_utils_forked/esc_pos_utils_forked.dart';
+import 'package:flutter_pos_printer/printer.dart';
+import 'package:image/image.dart';
+
+class EscPosPrinter extends GenericPrinter {
+  EscPosPrinter(PrinterConnector connector,
+      {this.dpi = 200, required this.width, this.beepCount = 4})
+      : super(connector);
+
+  final int width;
+  final int dpi;
+  final int beepCount;
 
   static late final Generator generator = Generator();
 
-  static List<int> buildPulseDrawerCommand() {
-    return [0x1b, 0x70, 0x00, 0x1e, 0xff, 0x00];
+  @override
+  Future<bool> beep() {
+    return sendToConnector(() => generator.beepFlash(n: beepCount));
   }
 
-  List<int> buildImageCommand(
-      {required List<int> imageData,
-      int width: 580,
-      image.Interpolation interpolation: image.Interpolation.linear}) {
-    print("buildImageCommand: $width");
-    final decodedImage = image.decodeImage(imageData)!;
-    final resizedImage = decodedImage.width != width
-        ? image.copyResize(decodedImage,
-            width: width, interpolation: image.Interpolation.linear)
-        : decodedImage;
+  @override
+  Future<bool> image(Uint8List image) {
+    return sendToConnector(() {
+      print("buildImageCommand: $width");
+      final decodedImage = decodeImage(image)!;
+      final resizedImage = decodedImage.width != width
+          ? copyResize(decodedImage,
+              width: width, interpolation: Interpolation.linear)
+          : decodedImage;
 
-    final printerImage = generator.image(resizedImage);
+      final printerImage = generator.image(resizedImage);
+      List<int> bytes = [];
+      bytes += generator.reset();
+      bytes += generator.setLineSpacing(0);
+      bytes += printerImage;
+      bytes += generator.resetLineSpacing();
+      bytes += generator.cut();
+      return bytes;
+    });
+  }
 
-    List<int> bytes = [];
-    bytes += generator.reset();
-    bytes += generator.setLineSpacing(0);
-    bytes += printerImage;
-    bytes += generator.resetLineSpacing();
-    bytes += generator.cut();
-    return bytes;
+  @override
+  Future<bool> pulseDrawer() {
+    return sendToConnector(() => [0x1b, 0x70, 0x00, 0x1e, 0xff, 0x00]);
+  }
+
+  @override
+  Future<bool> selfTest() async {
+    return true;
+  }
+
+  @override
+  Future<bool> setIp(String ipAddress) {
+    return sendToConnector(() {
+      return encodeSetIP(ipAddress);
+    });
   }
 }
