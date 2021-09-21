@@ -16,8 +16,8 @@ class WindowPrinterInfo {
   });
 }
 
-class WindowPrinterConnector implements PrinterConnector {
-  WindowPrinterConnector(this.printerName);
+class WindowsSpoolerPrinterConnector implements PrinterConnector {
+  WindowsSpoolerPrinterConnector(this.printerName);
 
   final String printerName;
 

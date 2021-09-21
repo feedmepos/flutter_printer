@@ -31,7 +31,7 @@ Future<List<PrinterDiscovered>> discoverPrinters(
     {List<DiscoverResult Function()> modes = const [
       discoverStarPrinter,
       AndroidUsbPrinterConnector.discoverPrinters,
-      WindowPrinterConnector.discoverPrinters,
+      WindowsSpoolerPrinterConnector.discoverPrinters,
       // TcpPrinterConnector.discoverPrinters
     ]}) async {
   List<PrinterDiscovered> result = [];
