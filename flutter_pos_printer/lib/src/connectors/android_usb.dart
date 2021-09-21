@@ -22,7 +22,7 @@ class AndroidUsbPrinterInfo {
 }
 
 class AndroidUsbPrinterConnector implements PrinterConnector {
-  AndroidUsbPrinterConnector(this.vendorId, this.productId);
+  AndroidUsbPrinterConnector({required this.vendorId, required this.productId});
 
   final String vendorId;
   final String productId;
@@ -48,25 +48,22 @@ class AndroidUsbPrinterConnector implements PrinterConnector {
     return [];
   }
 
-  Future<bool> _connect() async {
-    Map<String, dynamic> params = {"vendor": vendorId, "product": productId};
-    return await flutterPrinterChannel.invokeMethod('connectPrinter', params) ==
-            1
-        ? true
-        : false;
+  Future<void> _connect() async {
+    Map<String, dynamic> params = {
+      "vendor": int.parse(vendorId),
+      "product": int.parse(productId)
+    };
+    await flutterPrinterChannel.invokeMethod('connectPrinter', params);
   }
 
   @override
   Future<bool> send(List<int> bytes) async {
     try {
-      if (await _connect()) {
-        Map<String, dynamic> params = {"bytes": bytes};
-        return await flutterPrinterChannel.invokeMethod('printBytes', params) ==
-                1
-            ? true
-            : false;
-      }
-      return false;
+      await _connect();
+      Map<String, dynamic> params = {"bytes": bytes};
+      return await flutterPrinterChannel.invokeMethod('printBytes', params) == 1
+          ? true
+          : false;
     } catch (e) {
       return false;
     }

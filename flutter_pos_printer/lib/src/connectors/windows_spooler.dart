@@ -38,12 +38,9 @@ class WindowPrinterConnector implements PrinterConnector {
     return [];
   }
 
-  Future<bool> _connect() async {
+  Future<void> _connect() async {
     Map<String, dynamic> params = {"name": printerName};
-    return await flutterPrinterChannel.invokeMethod('connectPrinter', params) ==
-            1
-        ? true
-        : false;
+    await flutterPrinterChannel.invokeMethod('connectPrinter', params);
   }
 
   Future<bool> _close() async {
@@ -55,14 +52,11 @@ class WindowPrinterConnector implements PrinterConnector {
   @override
   Future<bool> send(List<int> bytes) async {
     try {
-      if (await _connect()) {
-        Map<String, dynamic> params = {"bytes": Uint8List.fromList(bytes)};
-        return await flutterPrinterChannel.invokeMethod('printBytes', params) ==
-                1
-            ? true
-            : false;
-      }
-      return false;
+      await _connect();
+      Map<String, dynamic> params = {"bytes": Uint8List.fromList(bytes)};
+      return await flutterPrinterChannel.invokeMethod('printBytes', params) == 1
+          ? true
+          : false;
     } catch (e) {
       await this._close();
       return false;
