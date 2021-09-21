@@ -167,8 +167,8 @@ class TsplPrinter extends GenericPrinter {
   }
 
   @override
-  Future<bool> beep() {
-    return sendToConnector(() {
+  Future<bool> beep() async {
+    return await sendToConnector(() {
       return [Command.clearCache(), Command.beep(), Command.close()]
           .join()
           .codeUnits;
@@ -176,8 +176,8 @@ class TsplPrinter extends GenericPrinter {
   }
 
   @override
-  Future<bool> selfTest() {
-    return sendToConnector(() {
+  Future<bool> selfTest() async {
+    return await sendToConnector(() {
       return [Command.clearCache(), Command.selfTest(), Command.close()]
           .join()
           .codeUnits;
@@ -185,28 +185,27 @@ class TsplPrinter extends GenericPrinter {
   }
 
   @override
-  Future<bool> setIp(String ipAddress) {
-    return sendToConnector(() {
-      return encodeSetIP(ipAddress);
-    });
+  Future<bool> setIp(String ipAddress) async {
+    return await sendToConnector(() => encodeSetIP(ipAddress));
   }
 
   @override
-  Future<bool> image(Uint8List image) {
-    return sendToConnector(() {
+  Future<bool> image(Uint8List image) async {
+    return await sendToConnector(() {
       if (image.length > 0) {
         final decodedImage = decodeImage(image)!;
         final rasterizeImage = _toRaster(decodedImage, dpi: int.parse(dpi));
         List<int> buffer = [];
-        buffer += _convertStringToUTF16(this._config);
-        buffer += _convertStringToUTF16(Command.clearCache());
-        buffer += _convertStringToUTF16(Command.imageString(
-            '0', '0', rasterizeImage.width, rasterizeImage.height,
-            mode: '0'));
+        buffer += this._config.codeUnits;
+        buffer += Command.clearCache().codeUnits;
+        buffer += Command.imageString(
+                '0', '0', rasterizeImage.width, rasterizeImage.height,
+                mode: '0')
+            .codeUnits;
         buffer += rasterizeImage.data;
         buffer += Command.EOL_HEX;
-        buffer += _convertStringToUTF16(Command.printIt('1', repeat: '1'));
-        buffer += _convertStringToUTF16(Command.close());
+        buffer += Command.printIt('1', repeat: '1').codeUnits;
+        buffer += Command.close().codeUnits;
         return buffer;
       } else {
         return [];

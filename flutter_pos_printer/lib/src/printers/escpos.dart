@@ -16,13 +16,13 @@ class EscPosPrinter extends GenericPrinter {
   final Generator generator = Generator();
 
   @override
-  Future<bool> beep() {
-    return sendToConnector(() => generator.beepFlash(n: beepCount));
+  Future<bool> beep() async {
+    return await sendToConnector(() => generator.beepFlash(n: beepCount));
   }
 
   @override
-  Future<bool> image(Uint8List image) {
-    return sendToConnector(() {
+  Future<bool> image(Uint8List image) async {
+    return await sendToConnector(() {
       print("buildImageCommand: $width");
       final decodedImage = decodeImage(image)!;
       final resizedImage = decodedImage.width != width
@@ -42,8 +42,8 @@ class EscPosPrinter extends GenericPrinter {
   }
 
   @override
-  Future<bool> pulseDrawer() {
-    return sendToConnector(() => [0x1b, 0x70, 0x00, 0x1e, 0xff, 0x00]);
+  Future<bool> pulseDrawer() async {
+    return await sendToConnector(() => [0x1b, 0x70, 0x00, 0x1e, 0xff, 0x00]);
   }
 
   @override
@@ -52,9 +52,7 @@ class EscPosPrinter extends GenericPrinter {
   }
 
   @override
-  Future<bool> setIp(String ipAddress) {
-    return sendToConnector(() {
-      return encodeSetIP(ipAddress);
-    });
+  Future<bool> setIp(String ipAddress) async {
+    return await sendToConnector(() => encodeSetIP(ipAddress));
   }
 }

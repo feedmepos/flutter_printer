@@ -25,24 +25,23 @@ class TcpPrinterConnector implements PrinterConnector {
 
   static DiscoverResult<TcpPrinterInfo> discoverPrinters() async {
     final List<PrinterDiscovered<TcpPrinterInfo>> result = [];
-    final ip = await NetworkInfo().getWifiIP();
+    final defaultPort = 9100;
 
-    final String subnet = ip!.substring(0, ip.lastIndexOf('.'));
-    const port = 9100;
-    for (var i = 0; i < 256; i++) {
-      String ip = '$subnet.$i';
-      await Socket.connect(ip, port, timeout: Duration(milliseconds: 50))
-          .then((socket) async {
-        await InternetAddress(socket.address.address).reverse().then((value) {
-          result.add(PrinterDiscovered<TcpPrinterInfo>(
-              name: value.host, detail: TcpPrinterInfo(address: value)));
-        }).catchError((error) {
-          print(socket.address.address);
-          print('Error: $error');
-        });
-        socket.destroy();
-      }).catchError((error) => null);
-    }
+    final String? deviceIp = await NetworkInfo().getWifiIP();
+    if (deviceIp == null) return result;
+
+    final String subnet = deviceIp.substring(0, deviceIp.lastIndexOf('.'));
+    final List<String> ips = List.generate(255, (index) => '$subnet.$index');
+
+    await Future.wait(ips.map((ip) async {
+      try {
+        final _socket = await Socket.connect(ip, defaultPort,
+            timeout: Duration(milliseconds: 50));
+        _socket.destroy();
+        result.add(PrinterDiscovered<TcpPrinterInfo>(
+            name: ip, detail: TcpPrinterInfo(address: _socket.address)));
+      } catch (e) {}
+    }));
     return result;
   }
 

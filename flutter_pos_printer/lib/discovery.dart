@@ -32,7 +32,7 @@ Future<List<PrinterDiscovered>> discoverPrinters(
       discoverStarPrinter,
       AndroidUsbPrinterConnector.discoverPrinters,
       WindowsSpoolerPrinterConnector.discoverPrinters,
-      // TcpPrinterConnector.discoverPrinters
+      TcpPrinterConnector.discoverPrinters
     ]}) async {
   List<PrinterDiscovered> result = [];
   await Future.wait(modes.map((m) async {
