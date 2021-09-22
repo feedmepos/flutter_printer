@@ -35,6 +35,8 @@ public class USBPrinterAdapter {
     private UsbEndpoint mEndPoint;
     private static final String ACTION_USB_PERMISSION = "com.flutter_pos_printer.USB_PERMISSION";
 
+    private static Object printLock = new Object();
+
     private USBPrinterAdapter() {
     }
 
@@ -165,9 +167,11 @@ public class USBPrinterAdapter {
             new Thread(new Runnable() {
                 @Override
                 public void run() {
-                    byte[] bytes = printData.getBytes(Charset.forName("UTF-8"));
-                    int b = mUsbDeviceConnection.bulkTransfer(mEndPoint, bytes, bytes.length, 100000);
-                    Log.i(LOG_TAG, "Return code: " + b);
+                    synchronized (printLock) {
+                        byte[] bytes = printData.getBytes(Charset.forName("UTF-8"));
+                        int b = mUsbDeviceConnection.bulkTransfer(mEndPoint, bytes, bytes.length, 100000);
+                        Log.i(LOG_TAG, "Return code: " + b);
+                    }
                 }
             }).start();
             return true;
@@ -186,9 +190,11 @@ public class USBPrinterAdapter {
             new Thread(new Runnable() {
                 @Override
                 public void run() {
-                    byte[] bytes = Base64.decode(rawData, Base64.DEFAULT);
-                    int b = mUsbDeviceConnection.bulkTransfer(mEndPoint, bytes, bytes.length, 100000);
-                    Log.i(LOG_TAG, "Return code: " + b);
+                    synchronized (printLock) {
+                        byte[] bytes = Base64.decode(rawData, Base64.DEFAULT);
+                        int b = mUsbDeviceConnection.bulkTransfer(mEndPoint, bytes, bytes.length, 100000);
+                        Log.i(LOG_TAG, "Return code: " + b);
+                    }
                 }
             }).start();
             return true;
@@ -209,30 +215,32 @@ public class USBPrinterAdapter {
             new Thread(new Runnable() {
                 @Override
                 public void run() {
-                    Vector<Byte> vectorData = new Vector<>();
-                    for (int i = 0; i < bytesArray.size(); ++i) {
-                        Integer val = bytesArray.get(i);
-                        vectorData.add(val.byteValue());
-                    }
-                    Object[] temp = vectorData.toArray();
-                    byte[] bytedata = new byte[temp.length];
-                    for (int i = 0; i < temp.length; i++) {
-                        bytedata[i] = (byte) temp[i];
-                    }
-                    int b = 0;
-                    if (bytedata.length > chunkSize) {
-                        int chunks = bytedata.length / chunkSize;
-                        if (bytedata.length % chunkSize > 0) {
-                            ++chunks;
+                    synchronized (printLock) {
+                        Vector<Byte> vectorData = new Vector<>();
+                        for (int i = 0; i < bytesArray.size(); ++i) {
+                            Integer val = bytesArray.get(i);
+                            vectorData.add(val.byteValue());
                         }
-                        for (int i = 0; i < chunks; ++i) {
-                            byte[] buffer = Arrays.copyOfRange(bytedata, i * chunkSize, chunkSize + i * chunkSize);
-                            b = mUsbDeviceConnection.bulkTransfer(mEndPoint, buffer, chunkSize, 100000);
+                        Object[] temp = vectorData.toArray();
+                        byte[] bytedata = new byte[temp.length];
+                        for (int i = 0; i < temp.length; i++) {
+                            bytedata[i] = (byte) temp[i];
                         }
-                    } else {
-                        b = mUsbDeviceConnection.bulkTransfer(mEndPoint, bytedata, bytedata.length, 100000);
+                        int b = 0;
+                        if (bytedata.length > chunkSize) {
+                            int chunks = bytedata.length / chunkSize;
+                            if (bytedata.length % chunkSize > 0) {
+                                ++chunks;
+                            }
+                            for (int i = 0; i < chunks; ++i) {
+                                byte[] buffer = Arrays.copyOfRange(bytedata, i * chunkSize, chunkSize + i * chunkSize);
+                                b = mUsbDeviceConnection.bulkTransfer(mEndPoint, buffer, chunkSize, 100000);
+                            }
+                        } else {
+                            b = mUsbDeviceConnection.bulkTransfer(mEndPoint, bytedata, bytedata.length, 100000);
+                        }
+                        Log.i(LOG_TAG, "Return code: " + b);
                     }
-                    Log.i(LOG_TAG, "Return code: " + b);
                 }
             }).start();
             return true;
