@@ -48,22 +48,21 @@ class AndroidUsbPrinterConnector implements PrinterConnector {
     return [];
   }
 
-  Future<void> _connect() async {
+  Future<bool> _connect() async {
     Map<String, dynamic> params = {
       "vendor": int.parse(vendorId),
       "product": int.parse(productId)
     };
-    await flutterPrinterChannel.invokeMethod('connectPrinter', params);
+    return await flutterPrinterChannel.invokeMethod('connectPrinter', params);
   }
 
   @override
   Future<bool> send(List<int> bytes) async {
     try {
-      await _connect();
+      final connected = await _connect();
+      if (!connected) return false;
       Map<String, dynamic> params = {"bytes": bytes};
-      return await flutterPrinterChannel.invokeMethod('printBytes', params) == 1
-          ? true
-          : false;
+      return await flutterPrinterChannel.invokeMethod('printBytes', params);
     } catch (e) {
       return false;
     }

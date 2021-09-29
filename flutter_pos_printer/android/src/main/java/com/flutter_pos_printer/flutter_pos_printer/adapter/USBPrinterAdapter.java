@@ -101,17 +101,19 @@ public class USBPrinterAdapter {
     public boolean selectDevice(Integer vendorId, Integer productId) {
 
         if (mUsbDevice == null || mUsbDevice.getVendorId() != vendorId || mUsbDevice.getProductId() != productId) {
-            closeConnectionIfExists();
-            List<UsbDevice> usbDevices = getDeviceList();
-            for (UsbDevice usbDevice : usbDevices) {
-                if ((usbDevice.getVendorId() == vendorId) && (usbDevice.getProductId() == productId)) {
-                    Log.v(LOG_TAG, "Request for device: vendor_id: " + usbDevice.getVendorId() + ", product_id: " + usbDevice.getProductId());
-                    closeConnectionIfExists();
-                    mUSBManager.requestPermission(usbDevice, mPermissionIndent);
-                    return true;
+            synchronized (printLock) {
+                closeConnectionIfExists();
+                List<UsbDevice> usbDevices = getDeviceList();
+                for (UsbDevice usbDevice : usbDevices) {
+                    if ((usbDevice.getVendorId() == vendorId) && (usbDevice.getProductId() == productId)) {
+                        Log.v(LOG_TAG, "Request for device: vendor_id: " + usbDevice.getVendorId() + ", product_id: " + usbDevice.getProductId());
+                        closeConnectionIfExists();
+                        mUSBManager.requestPermission(usbDevice, mPermissionIndent);
+                        return true;
+                    }
                 }
+                return false;
             }
-            return false;
         }
         return true;
     }
@@ -227,19 +229,21 @@ public class USBPrinterAdapter {
                             bytedata[i] = (byte) temp[i];
                         }
                         int b = 0;
-                        if (bytedata.length > chunkSize) {
-                            int chunks = bytedata.length / chunkSize;
-                            if (bytedata.length % chunkSize > 0) {
-                                ++chunks;
+                        if (mUsbDeviceConnection != null) {
+                            if (bytedata.length > chunkSize) {
+                                int chunks = bytedata.length / chunkSize;
+                                if (bytedata.length % chunkSize > 0) {
+                                    ++chunks;
+                                }
+                                for (int i = 0; i < chunks; ++i) {
+                                    byte[] buffer = Arrays.copyOfRange(bytedata, i * chunkSize, chunkSize + i * chunkSize);
+                                    b = mUsbDeviceConnection.bulkTransfer(mEndPoint, buffer, chunkSize, 100000);
+                                }
+                            } else {
+                                b = mUsbDeviceConnection.bulkTransfer(mEndPoint, bytedata, bytedata.length, 100000);
                             }
-                            for (int i = 0; i < chunks; ++i) {
-                                byte[] buffer = Arrays.copyOfRange(bytedata, i * chunkSize, chunkSize + i * chunkSize);
-                                b = mUsbDeviceConnection.bulkTransfer(mEndPoint, buffer, chunkSize, 100000);
-                            }
-                        } else {
-                            b = mUsbDeviceConnection.bulkTransfer(mEndPoint, bytedata, bytedata.length, 100000);
+                            Log.i(LOG_TAG, "Return code: " + b);
                         }
-                        Log.i(LOG_TAG, "Return code: " + b);
                     }
                 }
             }).start();
