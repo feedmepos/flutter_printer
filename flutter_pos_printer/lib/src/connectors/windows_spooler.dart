@@ -38,9 +38,12 @@ class WindowsSpoolerPrinterConnector implements PrinterConnector {
     return [];
   }
 
-  Future<void> _connect() async {
+  Future<bool> _connect() async {
     Map<String, dynamic> params = {"name": printerName};
-    await flutterPrinterChannel.invokeMethod('connectPrinter', params);
+    return await flutterPrinterChannel.invokeMethod('connectPrinter', params) ==
+            1
+        ? true
+        : false;
   }
 
   Future<bool> _close() async {
@@ -52,7 +55,8 @@ class WindowsSpoolerPrinterConnector implements PrinterConnector {
   @override
   Future<bool> send(List<int> bytes) async {
     try {
-      await _connect();
+      final connected = await _connect();
+      if (!connected) return false;
       Map<String, dynamic> params = {"bytes": Uint8List.fromList(bytes)};
       return await flutterPrinterChannel.invokeMethod('printBytes', params) == 1
           ? true
