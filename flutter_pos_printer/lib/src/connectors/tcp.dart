@@ -27,7 +27,10 @@ class TcpPrinterConnector implements PrinterConnector {
     final List<PrinterDiscovered<TcpPrinterInfo>> result = [];
     final defaultPort = 9100;
 
-    final String? deviceIp = await NetworkInfo().getWifiIP();
+    String? deviceIp;
+    if (!Platform.isWindows) {
+      deviceIp = await NetworkInfo().getWifiIP();
+    }
     if (deviceIp == null) return result;
 
     final String subnet = deviceIp.substring(0, deviceIp.lastIndexOf('.'));

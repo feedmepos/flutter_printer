@@ -4,6 +4,8 @@ import 'dart:typed_data';
 import 'package:flutter_pos_printer/printer.dart';
 import 'package:image/image.dart';
 
+import '../utils.dart';
+
 class ImageRaster {
   ImageRaster({required this.data, required this.width, required this.height});
 
@@ -162,10 +164,6 @@ class TsplPrinter extends GenericPrinter {
   late final String _shiftLeft;
   late final String _shiftTop;
 
-  List<int> _convertStringToUTF16(String str) {
-    return str.codeUnits;
-  }
-
   @override
   Future<bool> beep() async {
     return await sendToConnector(() {
@@ -195,11 +193,16 @@ class TsplPrinter extends GenericPrinter {
       if (image.length > 0) {
         final decodedImage = decodeImage(image)!;
         final rasterizeImage = _toRaster(decodedImage, dpi: int.parse(dpi));
+        final converted = toPixel(
+            ImageData(width: decodedImage.width, height: decodedImage.height),
+            paperWidth: int.parse(_sizeWidth),
+            dpi: int.parse(dpi),
+            isTspl: true);
         List<int> buffer = [];
         buffer += this._config.codeUnits;
         buffer += Command.clearCache().codeUnits;
-        buffer += Command.imageString(
-                '0', '0', rasterizeImage.width, rasterizeImage.height,
+        buffer += Command.imageString('0', '0', converted.width.toString(),
+                converted.height.toString(),
                 mode: '0')
             .codeUnits;
         buffer += rasterizeImage.data;

@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import 'package:esc_pos_utils_forked/esc_pos_utils_forked.dart';
 import 'package:flutter_pos_printer/printer.dart';
+import 'package:flutter_pos_printer/src/utils.dart';
 import 'package:image/image.dart';
 
 class EscPosPrinter extends GenericPrinter {
@@ -23,11 +24,15 @@ class EscPosPrinter extends GenericPrinter {
   @override
   Future<bool> image(Uint8List image) async {
     return await sendToConnector(() {
-      print("buildImageCommand: $width");
       final decodedImage = decodeImage(image)!;
-      final resizedImage = decodedImage.width != width
+      final converted = toPixel(
+          ImageData(width: decodedImage.width, height: decodedImage.height),
+          paperWidth: width,
+          dpi: dpi,
+          isTspl: false);
+      final resizedImage = decodedImage.width != converted.width
           ? copyResize(decodedImage,
-              width: width, interpolation: Interpolation.linear)
+              width: converted.width, interpolation: Interpolation.linear)
           : decodedImage;
 
       final printerImage = generator.image(resizedImage);
