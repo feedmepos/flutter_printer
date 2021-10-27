@@ -32,7 +32,7 @@ class EscPosPrinter extends GenericPrinter {
           isTspl: false);
       final resizedImage = decodedImage.width != converted.width
           ? copyResize(decodedImage,
-              width: converted.width, interpolation: Interpolation.linear)
+              width: converted.width, height: (converted.height * 2).toInt())
           : decodedImage;
 
       final printerImage = generator.image(resizedImage);
