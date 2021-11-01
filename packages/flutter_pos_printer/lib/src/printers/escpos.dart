@@ -23,18 +23,20 @@ class EscPosPrinter extends GenericPrinter {
 
   @override
   Future<bool> image(Uint8List image) async {
-    return await sendToConnector(() {
-      final decodedImage = decodeImage(image)!;
-      final converted = toPixel(
-          ImageData(width: decodedImage.width, height: decodedImage.height),
-          paperWidth: width,
-          dpi: dpi,
-          isTspl: false);
-      final resizedImage = decodedImage.width != converted.width
-          ? copyResize(decodedImage,
-              width: converted.width, height: (converted.height * 2).toInt())
-          : decodedImage;
+    final decodedImage = decodeImage(image)!;
 
+    final converted = toPixel(
+        ImageData(width: decodedImage.width, height: decodedImage.height),
+        paperWidth: width,
+        dpi: dpi,
+        isTspl: false);
+
+    final resizedImage = copyResize(decodedImage,
+        width: converted.width, height: (converted.height * 2).toInt());
+
+    final ms = 1000 + (converted.height * 0.5).toInt();
+
+    return await sendToConnector(() {
       final printerImage = generator.image(resizedImage);
       List<int> bytes = [];
       bytes += generator.reset();
@@ -43,7 +45,7 @@ class EscPosPrinter extends GenericPrinter {
       bytes += generator.resetLineSpacing();
       bytes += generator.cut();
       return bytes;
-    });
+    }, delayMs: ms);
   }
 
   @override

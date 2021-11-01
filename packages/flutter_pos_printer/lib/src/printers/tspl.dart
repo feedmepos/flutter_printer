@@ -189,15 +189,18 @@ class TsplPrinter extends GenericPrinter {
 
   @override
   Future<bool> image(Uint8List image) async {
+    final decodedImage = decodeImage(image)!;
+    final rasterizeImage = _toRaster(decodedImage, dpi: int.parse(dpi));
+    final converted = toPixel(
+        ImageData(width: decodedImage.width, height: decodedImage.height),
+        paperWidth: int.parse(_sizeWidth),
+        dpi: int.parse(dpi),
+        isTspl: true);
+
+    final ms = 1000 + (converted.height * 0.5).toInt();
+
     return await sendToConnector(() {
       if (image.length > 0) {
-        final decodedImage = decodeImage(image)!;
-        final rasterizeImage = _toRaster(decodedImage, dpi: int.parse(dpi));
-        final converted = toPixel(
-            ImageData(width: decodedImage.width, height: decodedImage.height),
-            paperWidth: int.parse(_sizeWidth),
-            dpi: int.parse(dpi),
-            isTspl: true);
         List<int> buffer = [];
         buffer += this._config.codeUnits;
         buffer += Command.clearCache().codeUnits;
@@ -213,7 +216,7 @@ class TsplPrinter extends GenericPrinter {
       } else {
         return [];
       }
-    });
+    }, delayMs: ms);
   }
 
   ImageRaster _toRaster(Image imgSrc, {int dpi = 200}) {
