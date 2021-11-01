@@ -1,6 +1,6 @@
 name: flutter_pos_printer
 description: A library to discover printers, and send printer commands.
-version: 1.0.1
+version: 1.0.2
 homepage: https://github.com/feedmepos/flutter_printer/packages/flutter_pos_printer
 
 environment:
