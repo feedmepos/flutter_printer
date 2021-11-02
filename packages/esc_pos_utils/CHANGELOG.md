@@ -1,3 +1,6 @@
+## [1.0.2]
+- Use 100 threshold for transforming image to b/w for more accuracy. Inverting & luminating will produce inaccurate b/w image.
+
 ## [1.0.1+1]
 
 - Remove hex, gbk_codec package
