@@ -1,3 +1,6 @@
+## 1.0.2+1
+* (fix) printing image to escpos will produce more accurate b/w color
+
 ## 1.0.2
 * (fix) sending printer image bytes too fast issue
 
