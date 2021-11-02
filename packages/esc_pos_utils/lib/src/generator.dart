@@ -68,7 +68,17 @@ class Generator {
 
     while (left < widthPx) {
       final Image slice = copyCrop(biggerImage, left, 0, lineHeight, heightPx);
-      final Uint8List bytes = slice.getBytes(format: Format.luminance);
+      final data = slice.data;
+      final Uint8List bytes = Uint8List(slice.width * slice.height);
+      final threshold = 100;
+      for (var i = 0, len = data.length; i < len; ++i) {
+        final int color = data[i];
+        final int r = (color & 0x000000FF);
+        final int g = (color & 0x0000FF00) >> 8;
+        final int b = (color & 0x00FF0000) >> 16;
+        bool shouldBeWhite = r > threshold && g > threshold && b > threshold;
+        bytes[i] = shouldBeWhite ? 0 : 1;
+      }
       blobs.add(bytes);
       left += lineHeight;
     }
@@ -111,14 +121,13 @@ class Generator {
   List<int> _packBitsIntoBytes(List<int> bytes) {
     const pxPerLine = 8;
     final List<int> res = <int>[];
-    const threshold = 127; // set the greyscale -> b/w threshold here
     for (int i = 0; i < bytes.length; i += pxPerLine) {
       int newVal = 0;
       for (int j = 0; j < pxPerLine; j++) {
         newVal = _transformUint32Bool(
           newVal,
           pxPerLine - j,
-          bytes[i + j] > threshold,
+          bytes[i + j],
         );
       }
       res.add(newVal ~/ 2);
@@ -127,9 +136,8 @@ class Generator {
   }
 
   /// Replaces a single bit in a 32-bit unsigned integer.
-  int _transformUint32Bool(int uint32, int shift, bool newValue) {
-    return ((0xFFFFFFFF ^ (0x1 << shift)) & uint32) |
-        ((newValue ? 1 : 0) << shift);
+  int _transformUint32Bool(int uint32, int shift, int newValue) {
+    return ((0xFFFFFFFF ^ (0x1 << shift)) & uint32) | (newValue << shift);
   }
   // ************************ (end) Internal helpers  ************************
 
@@ -300,17 +308,12 @@ class Generator {
     const bool highDensityHorizontal = true;
     const bool highDensityVertical = true;
 
-    invert(image);
     flip(image, Flip.horizontal);
-    print("flip = ${DateTime.now().millisecondsSinceEpoch - startTime} ms");
 
     final Image imageRotated = copyRotate(image, 270);
-    print("rotate = ${DateTime.now().millisecondsSinceEpoch - startTime} ms");
 
     const int lineHeight = highDensityVertical ? 3 : 1;
     final List<List<int>> blobs = _toColumnFormat(imageRotated, lineHeight * 8);
-    print(
-        "toColumnFormat = ${DateTime.now().millisecondsSinceEpoch - startTime} ms");
 
     // Compress according to line density
     // Line height contains 8 or 24 pixels of src image
