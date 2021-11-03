@@ -1,3 +1,6 @@
+## 1.0.3
+* (BREAKING) add threshold parameter for all printers
+
 ## 1.0.2+2
 * (fix) bump esc_pos_utils to 1.0.3
 

@@ -22,7 +22,7 @@ class EscPosPrinter extends GenericPrinter {
   }
 
   @override
-  Future<bool> image(Uint8List image) async {
+  Future<bool> image(Uint8List image, {int threshold = 150}) async {
     final decodedImage = decodeImage(image)!;
 
     final converted = toPixel(
@@ -37,7 +37,7 @@ class EscPosPrinter extends GenericPrinter {
     final ms = 1000 + (converted.height * 0.5).toInt();
 
     return await sendToConnector(() {
-      final printerImage = generator.image(resizedImage);
+      final printerImage = generator.image(resizedImage, threshold: threshold);
       List<int> bytes = [];
       bytes += generator.reset();
       bytes += generator.setLineSpacing(0);

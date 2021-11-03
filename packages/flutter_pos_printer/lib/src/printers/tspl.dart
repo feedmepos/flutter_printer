@@ -188,7 +188,7 @@ class TsplPrinter extends GenericPrinter {
   }
 
   @override
-  Future<bool> image(Uint8List image) async {
+  Future<bool> image(Uint8List image, {int threshold = 150}) async {
     final decodedImage = decodeImage(image)!;
     final rasterizeImage = _toRaster(decodedImage, dpi: int.parse(dpi));
     final converted = toPixel(

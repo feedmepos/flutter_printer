@@ -33,7 +33,7 @@ class StarPrinter extends Printer {
   }
 
   @override
-  Future<bool> image(Uint8List bytes) async {
+  Future<bool> image(Uint8List bytes, {int threshold = 150}) async {
     if (this._selectedPrinter == null) {
       throw new Exception(
           "No printer available, please connect before sending.");
