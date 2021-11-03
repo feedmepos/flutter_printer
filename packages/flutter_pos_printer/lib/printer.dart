@@ -22,21 +22,16 @@ abstract class GenericPrinter extends Printer {
   GenericPrinter(this.connector) : super();
 
   List<int> encodeSetIP(String ip) {
-    final regex = new RegExp(r"(\d+)");
-    if (regex.hasMatch(ip)) {
-      List<int> buffer = [0x1f, 0x1b, 0x1f, 0x91, 0x00, 0x49, 0x50];
-      final matches = regex.allMatches(ip);
-      matches.forEach((match) {
-        int ipMatch = int.parse(match.group(0)!);
-        buffer.add(ipMatch);
-      });
-      return buffer;
-    } else {
-      throw new Exception("Invalid IP");
-    }
+    List<int> buffer = [0x1f, 0x1b, 0x1f, 0x91, 0x00, 0x49, 0x50];
+    final List<String> splittedIp = ip.split('.');
+    return buffer..addAll(splittedIp.map((e) => int.parse(e)).toList());
   }
 
-  Future<bool> sendToConnector(List<int> Function() fn) async {
-    return await connector.send(fn());
+  Future<bool> sendToConnector(List<int> Function() fn, {int? delayMs}) async {
+    final resp = await connector.send(fn());
+    if (delayMs != null) {
+      await Future.delayed(Duration(milliseconds: delayMs));
+    }
+    return resp;
   }
 }

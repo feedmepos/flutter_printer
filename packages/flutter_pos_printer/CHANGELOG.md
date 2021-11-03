@@ -1,3 +1,6 @@
+## 1.0.2+2
+* (fix) bump esc_pos_utils to 1.0.3
+
 ## 1.0.2+1
 * (fix) printing image to escpos will produce more accurate b/w color
 
