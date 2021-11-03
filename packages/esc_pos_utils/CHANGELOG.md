@@ -1,3 +1,6 @@
+## [1.0.3]
+- Add threshold parameter, and check for alpha color using threshold for determing b/w
+
 ## [1.0.2]
 - Use 100 threshold for transforming image to b/w for more accuracy. Inverting & luminating will produce inaccurate b/w image.
 

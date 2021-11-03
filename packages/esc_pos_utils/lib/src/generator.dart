@@ -50,7 +50,8 @@ class Generator {
   ///
   /// [image] Image to extract from
   /// [lineHeight] Printed line height in dots
-  List<List<int>> _toColumnFormat(Image imgSrc, int lineHeight) {
+  List<List<int>> _toColumnFormat(Image imgSrc, int lineHeight,
+      {required int threshold}) {
     final Image image = Image.from(imgSrc); // make a copy
 
     // Determine new width: closest integer that is divisible by lineHeight
@@ -58,8 +59,10 @@ class Generator {
     final int heightPx = image.height;
 
     // Create a black bottom layer
-    final biggerImage = copyResize(image, width: widthPx, height: heightPx);
+    final biggerImage = copyResize(image,
+        width: widthPx, height: heightPx, interpolation: Interpolation.cubic);
     fill(biggerImage, 0);
+
     // Insert source image into bigger one
     drawImage(biggerImage, image, dstX: 0, dstY: 0);
 
@@ -70,13 +73,14 @@ class Generator {
       final Image slice = copyCrop(biggerImage, left, 0, lineHeight, heightPx);
       final data = slice.data;
       final Uint8List bytes = Uint8List(slice.width * slice.height);
-      final threshold = 100;
       for (var i = 0, len = data.length; i < len; ++i) {
         final int color = data[i];
         final int r = (color & 0x000000FF);
         final int g = (color & 0x0000FF00) >> 8;
         final int b = (color & 0x00FF0000) >> 16;
-        bool shouldBeWhite = r > threshold && g > threshold && b > threshold;
+        final int a = (color & 0xFF000000) >> 24;
+        bool shouldBeWhite =
+            a == 0 || (r > threshold && g > threshold && b > threshold);
         bytes[i] = shouldBeWhite ? 0 : 1;
       }
       blobs.add(bytes);
@@ -297,10 +301,9 @@ class Generator {
   /// Print an image using (ESC *) command
   ///
   /// [image] is an instanse of class from [Image library](https://pub.dev/packages/image)
-  Uint8ClampedList image(Image imgSrc, {PosAlign align = PosAlign.center}) {
+  Uint8List image(Image imgSrc,
+      {PosAlign align = PosAlign.center, int threshold = 150}) {
     List<int> bytes = [];
-    var startTime = DateTime.now().millisecondsSinceEpoch;
-
     // Image alignment
     bytes += setStyles(PosStyles().copyWith(align: align));
 
@@ -313,7 +316,8 @@ class Generator {
     final Image imageRotated = copyRotate(image, 270);
 
     const int lineHeight = highDensityVertical ? 3 : 1;
-    final List<List<int>> blobs = _toColumnFormat(imageRotated, lineHeight * 8);
+    final List<List<int>> blobs =
+        _toColumnFormat(imageRotated, lineHeight * 8, threshold: threshold);
 
     // Compress according to line density
     // Line height contains 8 or 24 pixels of src image
@@ -339,7 +343,7 @@ class Generator {
 
     // Reset line spacing: ESC 2 (HEX: 0x1b 0x32)
     //bytes += [27, 50];
-    return Uint8ClampedList.fromList(bytes);
+    return Uint8List.fromList(bytes);
   }
 
   /// Open cash drawer
