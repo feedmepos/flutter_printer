@@ -32,7 +32,9 @@ class EscPosPrinter extends GenericPrinter {
         isTspl: false);
 
     final resizedImage = copyResize(decodedImage,
-        width: converted.width, height: (converted.height * 2).toInt());
+        width: converted.width,
+        height: converted.height,
+        interpolation: Interpolation.cubic);
 
     final ms = 1000 + (converted.height * 0.5).toInt();
 

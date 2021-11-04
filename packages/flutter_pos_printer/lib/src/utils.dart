@@ -15,14 +15,14 @@ ImageData toPixel(ImageData image,
       (paperWidth.toDouble() * dpi.toDouble() * mmToInch).toInt();
   final int nearest = 8;
   targetWidthPx = (targetWidthPx - (targetWidthPx % nearest)).round();
-  final int widthRatio = targetWidthPx ~/ image.width;
+  final double widthRatio = targetWidthPx / image.width;
 
   int targetHeightPx = 0;
   if (isTspl) {
     targetHeightPx =
         (image.height.toDouble() * dpi.toDouble() * mmToInch).toInt();
   } else {
-    targetHeightPx = image.height * widthRatio;
+    targetHeightPx = (image.height * widthRatio).toInt();
   }
   return ImageData(width: targetWidthPx, height: targetHeightPx);
 }
