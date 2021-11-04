@@ -6,4 +6,8 @@ export 'src/connectors/windows_spooler.dart';
 export './src/printers/escpos.dart';
 export './src/printers/star.dart';
 export './src/printers/tspl.dart';
-export './printer.dart';
+export './src/utils/utils.dart';
+
+import 'package:flutter/services.dart';
+
+const flutterPrinterChannel = const MethodChannel('flutter_pos_printer');

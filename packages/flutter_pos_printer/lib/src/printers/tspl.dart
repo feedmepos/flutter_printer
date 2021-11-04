@@ -1,10 +1,11 @@
 import 'dart:core';
 import 'dart:typed_data';
 
-import 'package:flutter_pos_printer/printer.dart';
+import 'package:flutter_pos_printer/src/connectors/connector.dart';
+import 'package:flutter_pos_printer/src/operations/operations.dart';
+import 'package:flutter_pos_printer/src/operations/scaling.dart';
+import 'package:flutter_pos_printer/src/printers/printer.dart';
 import 'package:image/image.dart';
-
-import '../utils.dart';
 
 class ImageRaster {
   ImageRaster({required this.data, required this.width, required this.height});
@@ -189,8 +190,8 @@ class TsplPrinter extends GenericPrinter {
 
   @override
   Future<bool> image(Uint8List image, {int threshold = 150}) async {
-    final decodedImage = decodeImage(image)!;
-    final rasterizeImage = _toRaster(decodedImage, dpi: int.parse(dpi));
+    final decodedImage = await decodeImg(image);
+    final rasterizeImage = await _toRaster(decodedImage, dpi: int.parse(dpi));
     final converted = toPixel(
         ImageData(width: decodedImage.width, height: decodedImage.height),
         paperWidth: int.parse(_sizeWidth),
@@ -219,16 +220,16 @@ class TsplPrinter extends GenericPrinter {
     }, delayMs: ms);
   }
 
-  ImageRaster _toRaster(Image imgSrc, {int dpi = 200}) {
+  Future<ImageRaster> _toRaster(Image imgSrc, {int dpi = 200}) async {
     // 200 DPI : 1 mm = 8 dots
     // 300 DPI : 1 mm = 12 dots
     // width 35mm = 280px
     // height 25mm = 200px
     final int multiplier = dpi == 200 ? 8 : 12;
-    final Image image = copyResize(imgSrc,
+    final Image image = await resizeImage(ResizeParams(imgSrc,
         width: int.parse(this._sizeWidth) * multiplier,
         height: int.parse(this._sizeHeight) * multiplier,
-        interpolation: Interpolation.linear);
+        interpolation: Interpolation.cubic));
     final int widthPx = image.width;
     final int heightPx = image.height;
     final int widthBytes = widthPx ~/ 8; // one byte is 8 bits

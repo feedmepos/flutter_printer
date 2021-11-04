@@ -1,9 +1,11 @@
 import 'dart:typed_data';
 
-import 'package:esc_pos_utils_forked/esc_pos_utils_forked.dart';
-import 'package:flutter_pos_printer/printer.dart';
-import 'package:flutter_pos_printer/src/utils.dart';
-import 'package:image/image.dart';
+import 'package:flutter_pos_printer/src/connectors/connector.dart';
+import 'package:flutter_pos_printer/src/operations/operations.dart';
+import 'package:flutter_pos_printer/src/operations/scaling.dart';
+import 'package:flutter_pos_printer/src/utils/escpos/generator.dart';
+
+import 'printer.dart';
 
 class EscPosPrinter extends GenericPrinter {
   EscPosPrinter(PrinterConnector connector,
@@ -23,7 +25,7 @@ class EscPosPrinter extends GenericPrinter {
 
   @override
   Future<bool> image(Uint8List image, {int threshold = 150}) async {
-    final decodedImage = decodeImage(image)!;
+    final decodedImage = await decodeImg(image);
 
     final converted = toPixel(
         ImageData(width: decodedImage.width, height: decodedImage.height),
@@ -31,15 +33,14 @@ class EscPosPrinter extends GenericPrinter {
         dpi: dpi,
         isTspl: false);
 
-    final resizedImage = copyResize(decodedImage,
-        width: converted.width,
-        height: converted.height,
-        interpolation: Interpolation.cubic);
+    final resized = await resizeImage(ResizeParams(decodedImage,
+        width: converted.width, height: converted.height));
 
     final ms = 1000 + (converted.height * 0.5).toInt();
 
+    final printerImage = await generator.image(resized, threshold: threshold);
+
     return await sendToConnector(() {
-      final printerImage = generator.image(resizedImage, threshold: threshold);
       List<int> bytes = [];
       bytes += generator.reset();
       bytes += generator.setLineSpacing(0);

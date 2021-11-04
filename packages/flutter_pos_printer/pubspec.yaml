@@ -12,9 +12,6 @@ dependencies:
     sdk: flutter
   flutter_star_prnt: ^2.3.6
   enum_to_string: ^2.0.1
-  esc_pos_utils_forked: ^1.0.3
-  # esc_pos_utils_forked:
-  #   path: "../esc_pos_utils"
   network_info_plus: ^1.1.0
   image: ^3.0.8
 

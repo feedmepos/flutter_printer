@@ -1,8 +1,10 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:flutter_pos_printer/discovery.dart';
-import 'package:flutter_pos_printer/printer.dart';
+import 'package:flutter_pos_printer/flutter_pos_printer.dart';
+import 'package:flutter_pos_printer/src/operations/discovery.dart';
+
+import 'connector.dart';
 
 class AndroidUsbPrinterInfo {
   String vendorId;

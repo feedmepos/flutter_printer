@@ -1,8 +1,6 @@
 import 'dart:typed_data';
 
-import 'package:flutter/services.dart';
-
-final flutterPrinterChannel = const MethodChannel('flutter_pos_printer');
+import 'package:flutter_pos_printer/src/connectors/connector.dart';
 
 abstract class Printer {
   Future<bool> image(Uint8List image, {int threshold = 150});
@@ -10,11 +8,6 @@ abstract class Printer {
   Future<bool> pulseDrawer();
   Future<bool> setIp(String ipAddress);
   Future<bool> selfTest();
-}
-
-//
-abstract class PrinterConnector {
-  Future<bool> send(List<int> bytes);
 }
 
 abstract class GenericPrinter extends Printer {

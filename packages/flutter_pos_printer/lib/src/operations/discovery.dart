@@ -6,10 +6,9 @@ import 'package:flutter_star_prnt/flutter_star_prnt.dart';
 class PrinterDiscovered<T> {
   String name;
   T detail;
-  PrinterDiscovered({
-    required this.name,
-    required this.detail,
-  });
+  bool exist;
+  PrinterDiscovered(
+      {required this.name, required this.detail, this.exist = true});
 }
 
 typedef DiscoverResult<T> = Future<List<PrinterDiscovered<T>>>;

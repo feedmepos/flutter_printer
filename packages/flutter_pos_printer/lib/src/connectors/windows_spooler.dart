@@ -2,8 +2,10 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
 
-import 'package:flutter_pos_printer/discovery.dart';
-import 'package:flutter_pos_printer/printer.dart';
+import 'package:flutter_pos_printer/flutter_pos_printer.dart';
+import 'package:flutter_pos_printer/src/operations/discovery.dart';
+
+import 'connector.dart';
 
 class WindowPrinterInfo {
   String name;
