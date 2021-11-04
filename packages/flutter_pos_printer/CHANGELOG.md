@@ -1,3 +1,6 @@
+## 1.0.4
+* (fix) image height issue
+
 ## 1.0.3
 * (BREAKING) add threshold parameter for all printers
 
