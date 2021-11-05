@@ -14,6 +14,7 @@ dependencies:
   enum_to_string: ^2.0.1
   network_info_plus: ^1.1.0
   image: ^3.0.8
+  worker_manager: ^4.2.3
 
 dev_dependencies:
   flutter_test:

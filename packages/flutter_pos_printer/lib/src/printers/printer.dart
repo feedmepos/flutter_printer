@@ -2,6 +2,8 @@ import 'dart:typed_data';
 
 import 'package:flutter_pos_printer/src/connectors/connector.dart';
 
+import 'package:worker_manager/worker_manager.dart';
+
 abstract class Printer {
   Future<bool> image(Uint8List image, {int threshold = 150});
   Future<bool> beep();
@@ -28,3 +30,5 @@ abstract class GenericPrinter extends Printer {
     return resp;
   }
 }
+
+

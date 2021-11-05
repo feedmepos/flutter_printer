@@ -190,8 +190,9 @@ class TsplPrinter extends GenericPrinter {
 
   @override
   Future<bool> image(Uint8List image, {int threshold = 150}) async {
-    final decodedImage = await decodeImg(image);
-    final rasterizeImage = await _toRaster(decodedImage, dpi: int.parse(dpi));
+    final decodedImage = decodeImage(image)!;
+
+    final rasterizeImage = _toRaster(decodedImage, dpi: int.parse(dpi));
     final converted = toPixel(
         ImageData(width: decodedImage.width, height: decodedImage.height),
         paperWidth: int.parse(_sizeWidth),
@@ -220,16 +221,18 @@ class TsplPrinter extends GenericPrinter {
     }, delayMs: ms);
   }
 
-  Future<ImageRaster> _toRaster(Image imgSrc, {int dpi = 200}) async {
+  ImageRaster _toRaster(Image imgSrc, {int dpi = 200}) {
     // 200 DPI : 1 mm = 8 dots
     // 300 DPI : 1 mm = 12 dots
     // width 35mm = 280px
     // height 25mm = 200px
     final int multiplier = dpi == 200 ? 8 : 12;
-    final Image image = await resizeImage(ResizeParams(imgSrc,
+
+    final Image image = copyResize(imgSrc,
         width: int.parse(this._sizeWidth) * multiplier,
         height: int.parse(this._sizeHeight) * multiplier,
-        interpolation: Interpolation.cubic));
+        interpolation: Interpolation.cubic);
+
     final int widthPx = image.width;
     final int heightPx = image.height;
     final int widthBytes = widthPx ~/ 8; // one byte is 8 bits

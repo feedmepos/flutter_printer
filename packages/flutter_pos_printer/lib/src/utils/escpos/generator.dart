@@ -9,9 +9,6 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
-import 'package:flutter_pos_printer/src/operations/image/draw.dart';
-import 'package:flutter_pos_printer/src/operations/image/fill.dart';
-import 'package:flutter_pos_printer/src/operations/operations.dart';
 import 'package:image/image.dart';
 
 import 'commands.dart';
@@ -53,8 +50,8 @@ class Generator {
   ///
   /// [image] Image to extract from
   /// [lineHeight] Printed line height in dots
-  Future<List<List<int>>> _toColumnFormat(Image imgSrc, int lineHeight,
-      {required int threshold}) async {
+  List<List<int>> _toColumnFormat(Image imgSrc, int lineHeight,
+      {required int threshold}) {
     final Image image = Image.from(imgSrc); // make a copy
 
     // Determine new width: closest integer that is divisible by lineHeight
@@ -62,21 +59,20 @@ class Generator {
     final int heightPx = image.height;
 
     // Create a black bottom layer
-    final biggerImage = await resizeImage(ResizeParams(image,
-        width: widthPx, height: heightPx, interpolation: Interpolation.cubic));
+    final biggerImage = copyResize(image,
+        width: widthPx, height: heightPx, interpolation: Interpolation.cubic);
 
-    final filled = await fillImage(FillParams(biggerImage, color: 0));
+    final filled = fill(biggerImage, 0);
 
     // Insert source image into bigger one
-    final drawnBiggerImage = await drawImg(DrawParams(filled, image,
-        dstX: 0, dstY: 0, dstW: image.width, dstH: image.height));
+    final drawnBiggerImage = drawImage(filled, image, dstX: 0, dstY: 0);
 
     int left = 0;
     final List<List<int>> blobs = [];
 
     while (left < widthPx) {
-      final Image slice = await cropImage(CropParams(drawnBiggerImage,
-          x: left, y: 0, w: lineHeight, h: heightPx));
+      final Image slice =
+          copyCrop(drawnBiggerImage, left, 0, lineHeight, heightPx);
       final data = slice.data;
       final Uint8List bytes = Uint8List(slice.width * slice.height);
       for (var i = 0, len = data.length; i < len; ++i) {
@@ -307,8 +303,8 @@ class Generator {
   /// Print an image using (ESC *) command
   ///
   /// [image] is an instanse of class from [Image library](https://pub.dev/packages/image)
-  Future<Uint8List> image(Image imgSrc,
-      {PosAlign align = PosAlign.center, int threshold = 150}) async {
+  Uint8List image(Image imgSrc,
+      {PosAlign align = PosAlign.center, int threshold = 150}) {
     List<int> bytes = [];
     // Image alignment
     bytes += setStyles(PosStyles().copyWith(align: align));
@@ -317,13 +313,13 @@ class Generator {
     const bool highDensityHorizontal = true;
     const bool highDensityVertical = true;
 
-    final flipped = await flipImage(FlipParams(image, mode: Flip.horizontal));
+    flip(image, Flip.horizontal);
 
-    final Image rotated = await rotateImage(RotateParams(flipped, angle: 270));
+    final rotated = copyRotate(image, 270);
 
     const int lineHeight = highDensityVertical ? 3 : 1;
     final List<List<int>> blobs =
-        await _toColumnFormat(rotated, lineHeight * 8, threshold: threshold);
+        _toColumnFormat(rotated, lineHeight * 8, threshold: threshold);
 
     // Compress according to line density
     // Line height contains 8 or 24 pixels of src image

@@ -4,6 +4,7 @@ import 'dart:typed_data';
 
 import 'package:flutter_pos_printer/flutter_pos_printer.dart';
 import 'package:flutter_pos_printer/src/operations/discovery.dart';
+import 'package:worker_manager/worker_manager.dart';
 
 import 'connector.dart';
 
@@ -18,8 +19,9 @@ class WindowPrinterInfo {
   });
 }
 
-class WindowsSpoolerPrinterConnector implements PrinterConnector {
-  WindowsSpoolerPrinterConnector(this.printerName);
+class WindowsSpoolerPrinterConnector extends PrinterConnector {
+  WindowsSpoolerPrinterConnector(this.printerName, {required Executor executor})
+      : super(executor);
 
   final String printerName;
 

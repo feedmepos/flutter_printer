@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:flutter_pos_printer/flutter_pos_printer.dart';
 import 'package:flutter_pos_printer/src/operations/discovery.dart';
+import 'package:worker_manager/worker_manager.dart';
 
 import 'connector.dart';
 
@@ -23,8 +24,12 @@ class AndroidUsbPrinterInfo {
   });
 }
 
-class AndroidUsbPrinterConnector implements PrinterConnector {
-  AndroidUsbPrinterConnector({required this.vendorId, required this.productId});
+class AndroidUsbPrinterConnector extends PrinterConnector {
+  AndroidUsbPrinterConnector(
+      {required this.vendorId,
+      required this.productId,
+      required Executor executor})
+      : super(executor);
 
   final String vendorId;
   final String productId;
