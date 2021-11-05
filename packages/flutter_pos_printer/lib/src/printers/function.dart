@@ -52,7 +52,7 @@ class EscposPrintImageRes implements PrintImageRes {
   });
 }
 
-EscposPrintImageRes printEscposImage(PrintImageDto dto) {
+PrintImageRes printEscposImage(PrintImageDto dto) {
   final decodedImage = decodeImage(dto.image)!;
 
   final converted = toPixel(

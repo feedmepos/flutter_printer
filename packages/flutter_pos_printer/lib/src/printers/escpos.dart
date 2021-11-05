@@ -2,7 +2,6 @@ import 'dart:typed_data';
 
 import 'package:flutter_pos_printer/src/connectors/connector.dart';
 import 'package:flutter_pos_printer/src/utils/escpos/generator.dart';
-import 'package:image/image.dart';
 
 import 'function.dart';
 import 'printer.dart';

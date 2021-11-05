@@ -1,7 +1,7 @@
+import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
 
-import 'package:flutter/cupertino.dart';
 import 'package:flutter_pos_printer/src/operations/discovery.dart';
 import 'package:network_info_plus/network_info_plus.dart';
 import 'package:worker_manager/worker_manager.dart';
@@ -68,11 +68,22 @@ class TcpPrinterConnector extends PrinterConnector {
             name: host,
             detail: TcpPrinterInfo(address: _socket.address),
             exist: true);
-      } catch (err) {
-        return PrinterDiscovered(
+      } on SocketException catch (e) {
+        // printer may close our connection, but it is also connect success
+        if (e.osError?.errorCode == null &&
+            e.toString().contains('Socket has been closed')) {
+          return PrinterDiscovered<TcpPrinterInfo>(
+              name: host,
+              detail: TcpPrinterInfo(address: InternetAddress(host)),
+              exist: true);
+        }
+
+        return PrinterDiscovered<TcpPrinterInfo>(
             name: host,
             detail: TcpPrinterInfo(address: InternetAddress(host)),
             exist: false);
+      } on Exception catch (e) {
+        rethrow;
       }
     });
     final discovered = await Future.wait(results);
