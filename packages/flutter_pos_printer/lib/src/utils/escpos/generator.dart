@@ -58,21 +58,19 @@ class Generator {
     final int widthPx = (image.width + lineHeight) - (image.width % lineHeight);
     final int heightPx = image.height;
 
-    // Create a black bottom layer
-    final biggerImage = copyResize(image,
-        width: widthPx, height: heightPx, interpolation: Interpolation.cubic);
+    final finalImage = Image(widthPx, heightPx,
+        channels: image.channels, iccp: image.iccProfile);
 
-    final filled = fill(biggerImage, 0);
+    fill(finalImage, 0);
 
     // Insert source image into bigger one
-    final drawnBiggerImage = drawImage(filled, image, dstX: 0, dstY: 0);
+    drawImage(finalImage, image, dstX: 0, dstY: 0);
 
     int left = 0;
     final List<List<int>> blobs = [];
 
     while (left < widthPx) {
-      final Image slice =
-          copyCrop(drawnBiggerImage, left, 0, lineHeight, heightPx);
+      final Image slice = copyCrop(finalImage, left, 0, lineHeight, heightPx);
       final data = slice.data;
       final Uint8List bytes = Uint8List(slice.width * slice.height);
       for (var i = 0, len = data.length; i < len; ++i) {
