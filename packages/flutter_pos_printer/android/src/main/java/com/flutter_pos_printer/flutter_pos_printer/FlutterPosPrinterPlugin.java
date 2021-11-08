@@ -85,7 +85,7 @@ public class FlutterPosPrinterPlugin implements FlutterPlugin, MethodCallHandler
   }
 
   public void closeConn(Result result) {
-    adapter.closeConnectionIfExists();
+    adapter.closeConnection();
     result.success(true);
   }
 

@@ -24,11 +24,17 @@ class EscPosPrinter extends GenericPrinter {
 
   @override
   Future<bool> image(Uint8List image, {int threshold = 150}) async {
+    final stopwatch = Stopwatch();
+    stopwatch.start();
     final res = await connector.executor.execute(
         arg1: EscposPrintImageDto(image,
             width: width, dpi: dpi, threshold: threshold),
         fun1: printEscposImage);
-    return await sendToConnector(() {
+    stopwatch.stop();
+    print('escpos image: ${stopwatch.elapsedMilliseconds}ms');
+    stopwatch.reset();
+    stopwatch.start();
+    final success = await sendToConnector(() {
       List<int> bytes = [];
       bytes += generator.reset();
       bytes += generator.setLineSpacing(0);
@@ -37,6 +43,9 @@ class EscPosPrinter extends GenericPrinter {
       bytes += generator.cut();
       return bytes;
     }, delayMs: res.delayMs);
+    stopwatch.stop();
+    print('send escpos command: ${stopwatch.elapsedMilliseconds}ms');
+    return success;
   }
 
   @override

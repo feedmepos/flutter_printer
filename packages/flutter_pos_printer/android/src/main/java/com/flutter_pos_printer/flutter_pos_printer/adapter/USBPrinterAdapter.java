@@ -63,8 +63,8 @@ public class USBPrinterAdapter {
                 }
             } else if (UsbManager.ACTION_USB_DEVICE_DETACHED.equals(action)) {
                 if (mUsbDevice != null) {
-                    Toast.makeText(context, "USB device has been turned off", Toast.LENGTH_LONG).show();
-                    closeConnectionIfExists();
+                    Toast.makeText(context, "USB device disconnected", Toast.LENGTH_LONG).show();
+                    closeConnection();
                 }
             }
         }
@@ -80,7 +80,7 @@ public class USBPrinterAdapter {
         Log.v(LOG_TAG, "ESC/POS Printer initialized");
     }
 
-    public void closeConnectionIfExists() {
+    public void closeConnection() {
         if (mUsbDeviceConnection != null) {
             mUsbDeviceConnection.releaseInterface(mUsbInterface);
             mUsbDeviceConnection.close();
@@ -95,32 +95,31 @@ public class USBPrinterAdapter {
             Toast.makeText(mContext, "USB Manager is not initialized while trying to get devices list", Toast.LENGTH_LONG).show();
             return Collections.emptyList();
         }
-        return new ArrayList<UsbDevice>(mUSBManager.getDeviceList().values());
+        return new ArrayList(mUSBManager.getDeviceList().values());
     }
 
     public boolean selectDevice(Integer vendorId, Integer productId) {
-
         if (mUsbDevice == null || mUsbDevice.getVendorId() != vendorId || mUsbDevice.getProductId() != productId) {
             synchronized (printLock) {
-                closeConnectionIfExists();
+                closeConnection();
                 List<UsbDevice> usbDevices = getDeviceList();
                 for (UsbDevice usbDevice : usbDevices) {
                     if ((usbDevice.getVendorId() == vendorId) && (usbDevice.getProductId() == productId)) {
                         Log.v(LOG_TAG, "Request for device: vendor_id: " + usbDevice.getVendorId() + ", product_id: " + usbDevice.getProductId());
-                        closeConnectionIfExists();
+                        closeConnection();
                         mUSBManager.requestPermission(usbDevice, mPermissionIndent);
                         return true;
                     }
                 }
-                return false;
             }
+            return false;
         }
         return true;
     }
 
     public boolean openConnection() {
         if (mUsbDevice == null) {
-            Log.e(LOG_TAG, "USB Deivce is not initialized");
+            Log.e(LOG_TAG, "USB device is not initialized");
             return false;
         }
         if (mUSBManager == null) {
@@ -129,7 +128,7 @@ public class USBPrinterAdapter {
         }
 
         if (mUsbDeviceConnection != null) {
-            Log.i(LOG_TAG, "USB Connection already connected");
+            Log.i(LOG_TAG, "USB device already connected");
             return true;
         }
 
@@ -211,7 +210,7 @@ public class USBPrinterAdapter {
         Log.v(LOG_TAG, "Printing bytes");
         boolean isConnected = openConnection();
         if (isConnected) {
-            final int chunkSize = mEndPoint.getMaxPacketSize();
+            final int chunkSize = 4096;
             Log.v(LOG_TAG, "Max Packet Size: " + chunkSize);
             Log.v(LOG_TAG, "Connected to device");
             new Thread(new Runnable() {
@@ -224,26 +223,30 @@ public class USBPrinterAdapter {
                             vectorData.add(val.byteValue());
                         }
                         Object[] temp = vectorData.toArray();
-                        byte[] bytedata = new byte[temp.length];
+                        byte[] buffer = new byte[temp.length];
                         for (int i = 0; i < temp.length; i++) {
-                            bytedata[i] = (byte) temp[i];
+                            buffer[i] = (byte) temp[i];
                         }
+
                         int b = 0;
-                        if (mUsbDeviceConnection != null) {
-                            if (bytedata.length > chunkSize) {
-                                int chunks = bytedata.length / chunkSize;
-                                if (bytedata.length % chunkSize > 0) {
-                                    ++chunks;
-                                }
-                                for (int i = 0; i < chunks; ++i) {
-                                    byte[] buffer = Arrays.copyOfRange(bytedata, i * chunkSize, chunkSize + i * chunkSize);
-                                    b = mUsbDeviceConnection.bulkTransfer(mEndPoint, buffer, chunkSize, 100000);
-                                }
-                            } else {
-                                b = mUsbDeviceConnection.bulkTransfer(mEndPoint, bytedata, bytedata.length, 100000);
+
+                        if (buffer.length > chunkSize) {
+                            int chunks = buffer.length / chunkSize;
+                            if (buffer.length % chunkSize > 0) {
+                                ++chunks;
                             }
-                            Log.i(LOG_TAG, "Return code: " + b);
+                            for (int i = 0; i < chunks; ++i) {
+                                boolean isLast = buffer.length - chunkSize < chunkSize;
+                                int current = i * chunkSize;
+                                int size =
+                                        isLast ? (buffer.length - chunkSize) + current : chunkSize + i * chunkSize;
+                                byte[] chunk = Arrays.copyOfRange(buffer, current, size);
+                                b = mUsbDeviceConnection.bulkTransfer(mEndPoint, chunk, chunkSize, 100000);
+                            }
+                        } else {
+                            b = mUsbDeviceConnection.bulkTransfer(mEndPoint, buffer, buffer.length, 100000);
                         }
+                        Log.i(LOG_TAG, "Return code: " + b);
                     }
                 }
             }).start();
